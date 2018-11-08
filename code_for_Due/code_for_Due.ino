@@ -20,7 +20,8 @@ int RB[3] = {0, 0, 0};
 int LF[3] = {0, 0, 0};
 int LB[3] = {0, 0, 0};
 int serial_state;
-int Speed;
+int RSpeed;
+int LSpeed;
 int Dir;
 int speed_t;
 int dir_t;
@@ -33,10 +34,9 @@ void setup() {
   //Serial.println("Setup");
   Serial3.begin(9600);
   serial_state = 0;
-  Speed = 512;
-  Dir = 512;
+  RSpeed = 0;
+  LSpeed = 0;
   speed_t = 0;
-  dir_t = 0;
   // put your setup code here, to run once:
   pinMode(13,OUTPUT);
   pinMode(ENLF,OUTPUT);
@@ -90,27 +90,41 @@ void loop() {
   if (Serial3.available()){
     t = Serial3.read();
     switch(t){
-      case 's': serial_state = 0; break;
-      case 'd': serial_state = 1; break;
+      case 't': serial_state = -1; 
+        digitalWrite(RFP,1);  digitalWrite(RFN,0);
+        digitalWrite(RBP,1);  digitalWrite(RBN,0);
+        break;
+      case 'e': serial_state = -1; 
+        digitalWrite(RFP,0);  digitalWrite(RFN,1);
+        digitalWrite(RBP,0);  digitalWrite(RBN,1);
+        break;
+      case ';': serial_state = -1; 
+        digitalWrite(LFP,1);  digitalWrite(LFN,0);
+        digitalWrite(LBP,1);  digitalWrite(LBN,0);
+        break;
+      case 'k': serial_state = -1; 
+        digitalWrite(LFP,0);  digitalWrite(LFN,1);
+        digitalWrite(LBP,0);  digitalWrite(LBN,1);
+        break;
+      case 'r': serial_state = 1; break;
       case ' ': 
-        if (serial_state == 0){
-          Speed = speed_t;
+        if (serial_state == -1) break;
+        else if (serial_state == 0){
+          RSpeed = speed_t;
           speed_t = 0;
         }
         else if (serial_state == 1){
-          Dir = dir_t;
-          dir_t = 0;
+          LSpeed = speed_t;
+          speed_t = 0;
         }
         break;
       default:
-        if (serial_state == 0){
-          speed_t = 10*speed_t + ((int)t-48);
-        }
-        else if (serial_state == 1) {
-          dir_t = 10*dir_t + ((int)t-48);
-        }
+        speed_t = 10*speed_t + ((int)t-48);
     }
+    analogWrite(ENLF,LSpeed);
+    analogWrite(ENLB,LSpeed);
+    analogWrite(ENRF,RSpeed);
+    analogWrite(ENRB,RSpeed);
   }
-  set_speed(Speed, Dir);
   //delay(1000);
 }
