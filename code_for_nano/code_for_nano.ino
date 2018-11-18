@@ -7,11 +7,18 @@ int error = 1;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
-  error = ps2x.config_gamepad(13,11,10,12, true, true);
+  error = ps2x.config_gamepad(9,11,10,12, true, true);
   int type = ps2x.readType();
-  Serial.println(type);
-  if (error == 0) Serial.println("OK!!");
-  else Serial.println("ERROR!!");
+  //Serial.println(type);
+  pinMode(13, OUTPUT);
+  if (error == 0){
+    digitalWrite(13, 1);
+    //Serial.println("OK!!");
+  }
+  else{
+    digitalWrite(13, 0);
+    //Serial.println("ERROR!!");
+  }
   delay(2000);
   
 }
