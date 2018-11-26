@@ -1,37 +1,55 @@
 #include <PS2X_lib.h>
+#include <Servo.h>
 
 #ifndef PING_H
 #define PING_H
 
 //********** for the CAR RUN******************************** 
 
-const int motor_LF[3]={40,41,2};  //(motor left  front) IN1 IN2 ENA 
+const int motor_LF[3]={31,30,2};  //(motor left  front) IN1 IN2 ENA 
 const int motor_LB[3]={38,39,3};  //(motor left  back)  IN1 IN2 ENA 
-const int motor_RF[3]={32,33,5};  //(motor right front) IN1 IN2 ENA 
+const int motor_RF[3]={33,32,5};  //(motor right front) IN1 IN2 ENA 
 const int motor_RB[3]={34,35,6};  //(motor right back)  IN1 IN2 ENA  
 
 //**********    for BONUS      ***************************** {
 const int Servo_PPCT =10; //ping_pong collector
 const int Servo_NOKR=7; //Knocker
 const int laser = 13; //Knocker
-
+/*
+Servo PPCT;
+# define PPCT_init 120
+# define PPCT_action 34
+int PPCT_angle;
+*/
 //**********    for Collector      ***************************** 
 
 const int motor_CT[3]={42,43,4};  //(motor collector  )  IN1 IN2 ENA  
-const int Servo_PG= 11;       //Servo PLUG ? 
+const int Servo_PG= 9;       //Servo PLUG ? 
 const int Servo_DG= 8;          //Servo Drag ???踹????撩?收??
-const int Servo_X = 9;          //??瑽???撩?收??
+const int Servo_PX = 11;          //??瑽???撩?收??
 
+Servo PG;
+# define PG_max 130
+# define PG_init 117
+# define PG_min 50
+int PG_angle;
 
-# define PS2_clk 22
-# define PS2_cmd 23
-# define PS2_att 24
-# define PS2_data 25
+Servo PX;
+# define PX_init 170
+# define PX_action 105
+int PX_angle;
+
+Servo DG;
+# define DG_init 100
+# define DG_max 160
+# define DG_min 60
+int DG_angle;
 
 #endif
 
 int error;
 PS2X ps2x;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -43,18 +61,36 @@ void setup() {
   for (int i = 0; i<3;i++) pinMode(motor_CT[i], OUTPUT);
   pinMode(Servo_PG, OUTPUT);
   pinMode(Servo_DG, OUTPUT);
-  pinMode(Servo_X, OUTPUT);
+  pinMode(Servo_PX, OUTPUT);
   
-  error = ps2x.config_gamepad(PS2_clk, PS2_cmd, PS2_att, PS2_data, true, true);
+  //error = ps2x.config_gamepad(PS2_clk, PS2_cmd, PS2_att, PS2_data, true, true);
+  error = ps2x.config_gamepad(true, true);
   int type = ps2x.readType();
   Serial.println(error);
   while (error != 0){
     delay(1000);
     //ps2x.reconfig_gamepad();
     delay(1000);
-    error = ps2x.config_gamepad(PS2_clk, PS2_cmd, PS2_att, PS2_data, true, true);
+    //error = ps2x.config_gamepad(PS2_clk, PS2_cmd, PS2_att, PS2_data, true, true);
+    error = ps2x.config_gamepad(true, true);
     Serial.println(error);
   }
+  //PPCT.attach(Servo_PPCT);
+  //PPCT.write(PPCT_init);
+  //PPCT_angle = PPCT_init;
+  
+  PG.attach(Servo_PG);
+  PG.write(PG_init);
+  PG_angle = PG_init;
+
+  DG.attach(Servo_DG);
+  DG.write(DG_init);
+  DG_angle = DG_init;
+
+  PX.attach(Servo_PX);
+  PX.write(PX_init);
+  PX_angle = PX_init;
+  
   delay(2000);
 }
 
@@ -78,10 +114,10 @@ void loop() {
   byte ly = ps2x.Analog(PSS_LY);
   //byte ly = ps2x.Button(PSB_L2);
   byte rx = ps2x.Analog(PSS_RX);
-  Serial.print(ly);
-  Serial.print(" ");
-  Serial.print(rx);
-  Serial.println(" ");
+  //Serial.print(ly);
+  //Serial.print(" ");
+  //Serial.print(rx);
+  //Serial.println(" "); 
   int lw = 0;
   int rw = 0;
   transfer_function(ly, rx, &lw, &rw);
@@ -137,6 +173,40 @@ void loop() {
   }
   //Serial.print(" ");
   //Serial.print("\n");
-  delay(100);
+  
+  //****PPCT
+  //if(ps2x.Button(PSB_PAD_DOWN)) PPCT_angle -= 1;
+  //if(ps2x.Button(PSB_PAD_UP)) PPCT_angle += 3;
+  //PPCT_angle = (PPCT_angle > PPCT_init) ? PPCT_init : (PPCT_angle < PPCT_action) ? PPCT_action : PPCT_angle;
+  //PPCT.write(PPCT_angle);
+
+  //****PG
+  if(ps2x.Button(PSB_RED)) PG_angle -= 1;
+  if(ps2x.Button(PSB_PINK)) PG_angle += 1;
+  PG_angle = (PG_angle > PG_max) ? PG_max : (PG_angle < PG_min) ? PG_min : PG_angle;
+  PG.write(PG_angle);
+  if(ps2x.Button(PSB_GREEN)) PX_angle -= 1;
+  if(ps2x.Button(PSB_BLUE)) PX_angle += 1;
+  PX_angle = (PX_angle > PX_init) ? PX_init : (PX_angle < PX_action) ? PX_action : PX_angle;
+  PX.write(PX_angle);
+
+  
+  //**DG
+  if(ps2x.Button(PSB_PAD_RIGHT)) DG_angle -= 1;
+  if(ps2x.Button(PSB_PAD_LEFT)) DG_angle += 1;
+  DG_angle = (DG_angle > DG_max) ? DG_max : (DG_angle < DG_min) ? DG_min : DG_angle;
+  DG.write(DG_angle);
+
+  
+  if(ps2x.ButtonPressed(PSB_RED)) {
+    digitalWrite(motor_CT[0], 0);
+    digitalWrite(motor_CT[1], 1);
+    analogWrite(motor_CT[2], 255);
+    delay(100);
+  }
+  digitalWrite(motor_CT[0], 0);
+  digitalWrite(motor_CT[1], 0);
+  analogWrite(motor_CT[2], 255);
+  delay(5);
 
 }
