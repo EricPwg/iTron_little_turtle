@@ -12,18 +12,18 @@ const int motor_RF[3]={33,32,5};  //(motor right front) IN1 IN2 ENA
 const int motor_RB[3]={34,35,6};  //(motor right back)  IN1 IN2 ENA  
 
 //**********    for BONUS      ***************************** {
-const int Servo_PPCT =10; //ping_pong collector
-const int Servo_NOKR=7; //Knocker
+const int Servo_PPCT =7; //ping_pong collector
+const int Servo_NOKR=10; //Knocker
 const int laser = 13; //Knocker
-/*
+
 Servo PPCT;
 # define PPCT_init 120
-# define PPCT_action 34
+# define PPCT_action 30
 int PPCT_angle;
-*/
+
 //**********    for Collector      ***************************** 
 
-const int motor_CT[3]={42,43,4};  //(motor collector  )  IN1 IN2 ENA  
+const int motor_CT[3]={37, 36};  //(motor collector  )  IN1 IN2 ENA  
 const int Servo_PG= 9;       //Servo PLUG ? 
 const int Servo_DG= 8;          //Servo Drag ???踹????撩?收??
 const int Servo_PX = 11;          //??瑽???撩?收??
@@ -40,10 +40,15 @@ Servo PX;
 int PX_angle;
 
 Servo DG;
-# define DG_init 100
-# define DG_max 160
-# define DG_min 60
+# define DG_init 140
+# define DG_max 170
+# define DG_min 100
 int DG_angle;
+
+Servo NOKR;
+#define NOKR_init 175
+#define NOKR_action 90
+int NOKR_angle;
 
 #endif
 
@@ -62,6 +67,8 @@ void setup() {
   pinMode(Servo_PG, OUTPUT);
   pinMode(Servo_DG, OUTPUT);
   pinMode(Servo_PX, OUTPUT);
+  pinMode(laser, OUTPUT);
+  //digitalWrite(laser, HIGH);
   
   //error = ps2x.config_gamepad(PS2_clk, PS2_cmd, PS2_att, PS2_data, true, true);
   error = ps2x.config_gamepad(true, true);
@@ -75,9 +82,9 @@ void setup() {
     error = ps2x.config_gamepad(true, true);
     Serial.println(error);
   }
-  //PPCT.attach(Servo_PPCT);
-  //PPCT.write(PPCT_init);
-  //PPCT_angle = PPCT_init;
+  PPCT.attach(Servo_PPCT);
+  PPCT.write(PPCT_init);
+  PPCT_angle = PPCT_init;
   
   PG.attach(Servo_PG);
   PG.write(PG_init);
@@ -90,6 +97,10 @@ void setup() {
   PX.attach(Servo_PX);
   PX.write(PX_init);
   PX_angle = PX_init;
+
+  NOKR.attach(Servo_NOKR);
+  NOKR.write(NOKR_init);
+  NOKR_angle = NOKR_init;
   
   delay(2000);
 }
@@ -175,10 +186,10 @@ void loop() {
   //Serial.print("\n");
   
   //****PPCT
-  //if(ps2x.Button(PSB_PAD_DOWN)) PPCT_angle -= 1;
-  //if(ps2x.Button(PSB_PAD_UP)) PPCT_angle += 3;
-  //PPCT_angle = (PPCT_angle > PPCT_init) ? PPCT_init : (PPCT_angle < PPCT_action) ? PPCT_action : PPCT_angle;
-  //PPCT.write(PPCT_angle);
+  if(ps2x.Button(PSB_R2)){ PPCT_angle -= 1; PG.write(PG_init); PG_angle = PG_init;}
+  if(ps2x.Button(PSB_R1)){ PPCT_angle += 3; PG.write(PG_init); PG_angle = PG_init;}
+  PPCT_angle = (PPCT_angle > PPCT_init) ? PPCT_init : (PPCT_angle < PPCT_action) ? PPCT_action : PPCT_angle;
+  PPCT.write(PPCT_angle);
 
   //****PG
   if(ps2x.Button(PSB_RED)) PG_angle -= 1;
@@ -192,21 +203,27 @@ void loop() {
 
   
   //**DG
-  if(ps2x.Button(PSB_PAD_RIGHT)) DG_angle -= 1;
-  if(ps2x.Button(PSB_PAD_LEFT)) DG_angle += 1;
+  if(ps2x.Button(PSB_PAD_UP)) DG_angle -= 1;
+  if(ps2x.Button(PSB_PAD_DOWN)) DG_angle += 1;
   DG_angle = (DG_angle > DG_max) ? DG_max : (DG_angle < DG_min) ? DG_min : DG_angle;
   DG.write(DG_angle);
 
+  if(ps2x.Button(PSB_L1)) NOKR_angle -= 5;
+  if(ps2x.Button(PSB_L2)) NOKR_angle += 1;
+  NOKR_angle = (NOKR_angle > NOKR_init) ? NOKR_init : (NOKR_angle < NOKR_action) ? NOKR_action : NOKR_angle;
+  NOKR.write(NOKR_angle);
   
-  if(ps2x.ButtonPressed(PSB_RED)) {
+  if(ps2x.ButtonPressed(PSB_PAD_RIGHT)) {
     digitalWrite(motor_CT[0], 0);
     digitalWrite(motor_CT[1], 1);
-    analogWrite(motor_CT[2], 255);
-    delay(100);
+    delay(20);
+  }
+  if(ps2x.ButtonPressed(PSB_PAD_LEFT)) {
+    digitalWrite(motor_CT[0], 1);
+    digitalWrite(motor_CT[1], 0);
+    delay(20);
   }
   digitalWrite(motor_CT[0], 0);
   digitalWrite(motor_CT[1], 0);
-  analogWrite(motor_CT[2], 255);
   delay(5);
-
 }
